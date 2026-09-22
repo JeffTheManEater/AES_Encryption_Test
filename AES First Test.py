@@ -1,12 +1,25 @@
 import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 
 secret_message = b"secret tunnel"
 key = AESGCM.generate_key(bit_length=256)
 
-for i in range(5):
+def display_rsa_keys(first_add, private_key_local, mid_add, public_key_local, last_add):
+    private_pem = private_key_local.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    public_pem = public_key_local.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    print(f"{first_add}{private_pem}{mid_add}{public_pem}{last_add}")
+
+for i in range(1):
     print(f"\nAES Key: {key}")
 
     private_key = rsa.generate_private_key(
@@ -14,7 +27,8 @@ for i in range(5):
         key_size=4096,
     )
     public_key = private_key.public_key()
-    print(f"\nPrivate Key: {private_key}\nPublic Key: {public_key}")
+
+    display_rsa_keys("\n", private_key, "\n", public_key, "\n")
 
     encrypted_key = public_key.encrypt(
         key,
@@ -42,4 +56,4 @@ for i in range(5):
     crypto_thingy = aesgcm.encrypt(nonce, secret_message, associated_data=None)
     print(f"\nnonce + {i} = {nonce}\nAES-GCM Key: {key}\nEncrypted Message: {crypto_thingy}")
     crypto_thingy = aesgcm.decrypt(nonce, crypto_thingy, associated_data=None)
-    print(f"Decrypted Message:{crypto_thingy}\n")
+    print(f"Decrypted Message: {crypto_thingy}\n")
