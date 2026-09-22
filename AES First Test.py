@@ -1,21 +1,45 @@
 import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives import hashes
 
-# 1. Generate a secure random 256-bit key (32 bytes)
+secret_message = b"secret tunnel"
 key = AESGCM.generate_key(bit_length=256)
-aesgcm = AESGCM(key)
-
-# 2. Prepare the data (must be in bytes)
-secret_message = b"This is a highly confidential message0o000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000."
-
-# 3. Generate a unique 96-bit Nonce (Initialization Vector)
-# NEVER reuse a nonce with the same key
-
 
 for i in range(5):
+    print(f"\nAES Key: {key}")
+
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=4096,
+    )
+    public_key = private_key.public_key()
+    print(f"\nPrivate Key: {private_key}\nPublic Key: {public_key}")
+
+    encrypted_key = public_key.encrypt(
+        key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    print(f"Encrypted Key: {encrypted_key}")
+
+    decrypted_key = private_key.decrypt(
+        encrypted_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    print(f"Decrypted Key: {decrypted_key}")
+
+    aesgcm = AESGCM(decrypted_key)
     nonce_int = int.from_bytes(os.urandom(12), "big")
-    nonce = (nonce_int+1).to_bytes(12, "big")
+    nonce = (nonce_int+i).to_bytes(12, "big")
     crypto_thingy = aesgcm.encrypt(nonce, secret_message, associated_data=None)
-    print(crypto_thingy)
+    print(f"\nnonce + {i} = {nonce}\nAES-GCM Key: {key}\nEncrypted Message: {crypto_thingy}")
     crypto_thingy = aesgcm.decrypt(nonce, crypto_thingy, associated_data=None)
-    print(f"{crypto_thingy}\n")
+    print(f"Decrypted Message:{crypto_thingy}\n")
