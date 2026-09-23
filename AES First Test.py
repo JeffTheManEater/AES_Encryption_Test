@@ -51,9 +51,15 @@ for i in range(1):
     print(f"Decrypted Key: {decrypted_key}")
 
     aesgcm = AESGCM(decrypted_key)
-    nonce_int = int.from_bytes(os.urandom(12), "big")
-    nonce = (nonce_int+i).to_bytes(12, "big")
-    crypto_thingy = aesgcm.encrypt(nonce, secret_message, associated_data=None)
+    nonce_int = int.from_bytes(os.urandom(12), 
+                               "big")
+    nonce = (nonce_int+i).to_bytes(12, 
+                                   "big")
+    crypto_thingy = aesgcm.encrypt(nonce, 
+                                   secret_message, 
+                                   associated_data=None)
     print(f"\nnonce + {i} = {nonce}\nAES-GCM Key: {key}\nEncrypted Message: {crypto_thingy}")
-    crypto_thingy = aesgcm.decrypt(nonce, crypto_thingy, associated_data=None)
+    crypto_thingy = aesgcm.decrypt(nonce, 
+                                   crypto_thingy, 
+                                   associated_data=None)
     print(f"Decrypted Message: {crypto_thingy}\n")
